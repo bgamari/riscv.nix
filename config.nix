@@ -1,0 +1,3 @@
+{
+  build-cores = 9;
+}

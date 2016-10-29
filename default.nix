@@ -14,7 +14,7 @@ in
     };
 
     riscv-gnu-toolchain = import ./riscv-gnu-toolchain.nix {
-      inherit (pkgs) stdenv;
+      inherit (pkgs) stdenv gmp mpfr libmpc wget curl texinfo bison flex;
     };
 
     riscv-pk = import ./riscv-pk.nix {

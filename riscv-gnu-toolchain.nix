@@ -1,13 +1,15 @@
-{ stdenv }:
+{ stdenv, gmp, mpfr, libmpc, wget, curl, texinfo, bison, flex }:
 
 let
   nixpkgs = import <nixpkgs> {};
 in
   stdenv.mkDerivation rec {
     name = "riscv-gnu-toolchain";
+    buildInputs = [ gmp mpfr libmpc wget curl texinfo bison flex ];
+    hardeningDisable = [ "format" ];
     src = nixpkgs.fetchgit {
-      rev = "728afcddcb0526a0f6560c4032da82805f054d58";
+      rev = "910ea19c5173755f74924d3fc94e168e17693d97";
       url = "git://github.com/riscv/riscv-gnu-toolchain.git";
-      sha256 = "0n09ypk5drsrl0g59yw71py817kcmbs60jbkcsxbz8lhsaklr39g";
+      sha256 = "16w4nn6gni5n5i2dbb31w4fw2mbahmg4j199drpvpl6mzwydws7j";
     };
   }

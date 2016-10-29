@@ -1,8 +1,7 @@
-{ pkgs ? import <nixpkgs> {}; }:
-#{ system ? builtins.currentSystem }:
+{ system ? builtins.currentSystem }:
 
 let
-  #pkgs = import <nixpkgs> { inherit system; };
+  pkgs = import <nixpkgs> { inherit system; };
   bits = "64";
 in
   rec {

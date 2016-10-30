@@ -1,4 +1,4 @@
-{ bits, atomic ? true, float ? true, stdenv, gmp, mpfr, libmpc, glibc, riscv-gcc-stage1, riscv-binutils, linuxHeaders }:
+{ bits, cross, atomic ? true, float ? true, stdenv, gmp, mpfr, libmpc, riscv-gcc-stage1, riscv-binutils, linuxHeaders }:
 
 # TODO: float switch
 let
@@ -9,13 +9,15 @@ let
 in
   stdenv.mkDerivation rec {
     name = "riscv-glibc";
-    buildInputs = [ gmp mpfr libmpc riscv-gcc-stage1 riscv-binutils glibc.static linuxHeaders ];
+    nativeBuildInputs = [ gmp mpfr libmpc riscv-gcc-stage1 riscv-binutils linuxHeaders ];
     enableParallelBuilding = true;
     patches = [
       # Madness pertaining to an interaction between the Linux headers and a
       # FreeBSD compatibility hack in glibc.
       ./workaround-ptrace_getregs.patch
     ];
+    crossConfig = cross.config;
+
     configureFlags = [
       "--host=riscv${bits}-unknown-linux-gnu"
       "--disable-werror"

@@ -1,7 +1,7 @@
 { system ? builtins.currentSystem }:
 
 let
-  pkgs = import ./nixpkgs { inherit system crossSystem; };
+  pkgs = import ./nixpkgs { inherit system; };
   crossSystem = {
     config = "riscv64-unknown-linux";
   };
@@ -28,14 +28,10 @@ in
 
     linuxHeaders = pkgs.linuxHeaders_4_4;
 
-    # Debugging segfaults
-    #glibc = pkgs.enableDebugging pkgs.glibc;
-    glibc = pkgs.glibc.override {debug = true;};
-    #glibc = pkgs.glibc;
-
     riscv-glibc = import ./riscv-glibc.nix {
       inherit (pkgs) stdenv gmp mpfr libmpc;
-      inherit bits riscv-gcc-stage1 riscv-binutils linuxHeaders glibc;
+      inherit bits riscv-gcc-stage1 riscv-binutils linuxHeaders;
+      cross = crossSystem;
     };
 
     riscv-gcc-stage1 = import ./riscv-gcc-stage1.nix {

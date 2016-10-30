@@ -2,7 +2,6 @@
 
 let
   nixpkgs = import <nixpkgs> {};
-  make_flags = "-j$NIX_BUILD_CORES -l$NIX_BUILD_CORES";
 in
   stdenv.mkDerivation rec {
     name = "riscv-gcc-stage1";

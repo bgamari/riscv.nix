@@ -1,11 +1,12 @@
-{ bits, stdenv, texinfo, gmp, mpfr, libmpc, flex, bison, riscv-binutils, glibCross }:
+{ bits, stdenv, texinfo, gmp, mpfr, libmpc, flex, bison, riscv-binutils, riscv-glibc }:
 
 let
   nixpkgs = import <nixpkgs> {};
 in
   stdenv.mkDerivation rec {
     name = "riscv-gcc";
-    buildInputs = [ texinfo gmp mpfr libmpc flex bison riscv-binutils glibCross ];
+    nativeBuildInputs = [ texinfo gmp mpfr libmpc flex bison riscv-binutils ];
+    buildInputs = [ riscv-glibc ];
     configureFlags = [
       "--target=riscv${bits}-unknown-linux-gnu"
       "--with-newlib"
@@ -20,6 +21,9 @@ in
       "--disable-werror"
       "--with-arch=RV64IMAFD"
       "--disable-multilib"
+      "--with-as=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-as"
+      "--with-ld=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ld"
+      "--with-arch=RV64IMAFD"
     ];
     hardeningDisable = [ "format" ];
     dontDisableStatic = true;

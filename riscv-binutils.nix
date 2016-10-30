@@ -1,4 +1,4 @@
-{ bits, stdenv, texinfo, flex, bison }:
+{ bits, withFloat, stdenv, texinfo, flex, bison }:
 
 let
   nixpkgs = import <nixpkgs> {};
@@ -13,6 +13,7 @@ in
       "--disable-nls"
       "--disable-werror"
       "--disable-multilib"
+      (if withFloat then "--enable-soft-float" else "--disable-soft-float")
     ];
     src = nixpkgs.fetchgit {
       rev = "67561745546973c1e969348e274129b2d0637b1c";

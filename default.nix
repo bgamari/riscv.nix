@@ -1,11 +1,32 @@
 { system ? builtins.currentSystem }:
 
 let
+  # Use software floating-point in glibc
+  #
+  # withFloat=false:
+  #     binutils: --disable-soft-float
+  #     glibc:    (none)
+  #     gcc:      --disable-soft-float
+  #
+  # withFloat=true
+  #     binutils: --enable-soft-float
+  #     glibc:    --without-fp
+  #     gcc:      --enable-soft-float --with-float=soft
+  withFloat = true;
+
+  # with atomics
+  withAtomic = true;
+in
+let
   pkgs =
     (import ./nixpkgs {
       inherit system;
       config = { packageOverrides = pkgs: { glibcCross = toolchain.riscv-glibc; }; };
     }) // { glibcCross = toolchain.riscv-glibc; };
+
+  extraGccConfigureFlags =
+    if withFloat then "--enable-soft-float" else "--disable-soft-float";
+
   crossSystem = {
     config = "riscv64-unknown-linux-gnu";
     libc = "glibc";
@@ -14,9 +35,13 @@ let
       kernelMajor = "2.6";
       kernelArch = "riscv";
       kernelHeadersBaseConfig = "defconfig"; # TODO: is this right
+      gcc = {
+        arch = "RV64IMAFD";
+        float = if withFloat then "soft" else "";
+      };
     };
     withTLS = false;
-    float = "hard";
+    float = if withFloat then "soft" else "hard";
   };
   stdenv = pkgs.makeStdenvCross pkgs.stdenv crossSystem toolchain.riscv-binutils toolchain.riscv-gcc;
   bits = "64";
@@ -25,7 +50,7 @@ let
   toolchain = rec {
     riscv-binutils = import ./riscv-binutils.nix {
       inherit (pkgs) stdenv texinfo flex bison;
-      inherit bits;
+      inherit bits withFloat;
     };
 
     linuxHeaders = pkgs.linuxHeaders_4_4;
@@ -91,6 +116,8 @@ let
 
         # we need flex since it's a development snapshot
         nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.flex pkgs.bison ];
+        # For withFloat
+        configureFlags = oldAttrs.configureFlags + extraGccConfigureFlags;
       });
   };
 in

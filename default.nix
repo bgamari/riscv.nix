@@ -30,22 +30,6 @@ let
 
     linuxHeaders = pkgs.linuxHeaders_4_4;
 
-    #riscv-glibc = import ./riscv-glibc.nix {
-    #  inherit (pkgs) stdenv gmp mpfr libmpc;
-    #  inherit bits riscv-gcc-stage1 riscv-binutils linuxHeaders;
-    #  cross = crossSystem;
-    #};
-
-    #riscv-gcc-stage1 = import ./riscv-gcc-stage1.nix {
-    #  inherit (pkgs) stdenv texinfo gmp mpfr libmpc flex bison;
-    #  inherit bits riscv-binutils;
-    #};
-
-    #riscv-gcc = import ./riscv-gcc.nix {
-    #  inherit (pkgs) stdenv texinfo gmp mpfr libmpc flex bison;
-    #  inherit bits riscv-binutils riscv-glibc linuxHeaders;
-    #};
-
     riscv-gcc-stage1 =
       let libcCross1 = null;
       in pkgs.wrapGCCCross {
@@ -140,23 +124,6 @@ in
 
     riscv-image = import ./riscv-image.nix {
       inherit stdenv bits linux-riscv riscv-busybox;
-    };
-
-    # These are broken
-    riscv-gnu-toolchain = import ./riscv-gnu-toolchain.nix {
-      inherit (pkgs) gmp mpfr libmpc wget curl texinfo bison flex;
-      inherit stdenv;
-    };
-
-    binutils-riscv = (pkgs.binutils.overrideDerivation (oldAttrs: {
-      src = pkgs.fetchgit {
-        rev = "67561745546973c1e969348e274129b2d0637b1c";
-        url = "git://github.com/riscv/riscv-binutils-gdb.git";
-        sha256 = "0fhniqqvh6hn31xnrsdjyikaklp21r718f2kxph4gkx9ma88b9wn";
-      };
-      dontDisableStatic = true;
-    })).override {
-      cross = crossSystem;
     };
 
     inherit toolchain;

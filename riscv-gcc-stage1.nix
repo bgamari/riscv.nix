@@ -25,6 +25,8 @@ in
       "--disable-multilib"
       "--with-as=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-as"
       "--with-ld=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ld"
+      "--with-ar=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ar"
+      "--with-ranlib=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ranlib"
       "--with-arch=RV64IMAFD"
     ];
     hardeningDisable = [ "format" ];

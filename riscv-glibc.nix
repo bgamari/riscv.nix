@@ -8,6 +8,7 @@ let
   asflags = noatomic;
 in
   stdenv.mkDerivation rec {
+    inherit linuxHeaders;
     name = "riscv-glibc";
     nativeBuildInputs = [ gmp mpfr libmpc riscv-gcc-stage1 riscv-binutils linuxHeaders ];
     enableParallelBuilding = true;

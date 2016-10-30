@@ -1,15 +1,16 @@
-{ bits, stdenv, texinfo, gmp, mpfr, libmpc, flex, bison, riscv-binutils, riscv-glibc }:
+{ bits, stdenv, texinfo, gmp, mpfr, libmpc, flex, bison, riscv-binutils, riscv-glibc, linuxHeaders }:
 
 let
   nixpkgs = import <nixpkgs> {};
+  libcCross = riscv-glibc;
 in
   stdenv.mkDerivation rec {
     name = "riscv-gcc";
     nativeBuildInputs = [ texinfo gmp mpfr libmpc flex bison riscv-binutils ];
-    buildInputs = [ riscv-glibc ];
+    #buildInputs = [ riscv-glibc ];
     configureFlags = [
       "--target=riscv${bits}-unknown-linux-gnu"
-      "--with-newlib"
+      #"--with-newlib"
       "--enable-shared"
       "--enable-tls"
       "--enable-languages=c,c++,fortran"
@@ -23,6 +24,10 @@ in
       "--disable-multilib"
       "--with-as=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-as"
       "--with-ld=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ld"
+      "--with-ar=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ar"
+      "--with-ranlib=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ranlib"
+      #"--with-libs=${riscv-glibc}/lib"
+      #"--with-headers=${riscv-glibc}/include"
       "--with-arch=RV64IMAFD"
     ];
     hardeningDisable = [ "format" ];
@@ -36,10 +41,27 @@ in
       sha256 = "0n6lf1zm82lwyv7igfkmhh8kscg3lr95xa3lzwwqa7arddv9m7iz";
     };
 
+    CPATH = stdenv.lib.makeSearchPathOutput "dev" "include" (
+        libcCross.propagatedBuildInputs ++ [linuxHeaders]);
+    EXTRA_TARGET_CFLAGS =
+        [
+          "-idirafter ${libcCross}/include"
+        ];
+    EXTRA_TARGET_LDFLAGS =
+        [
+          "-Wl,-L${libcCross.out}/lib"
+        ]
+        ++ [
+          "-Wl,-rpath,${libcCross.out}/lib"
+          "-Wl,-rpath-link,${libcCross.out}/lib"
+        ];
+
     # Perform the build in a different directory.
     configurePhase = ''
       mkdir build
       cd build
       ../configure --prefix=$prefix ${builtins.concatStringsSep " " configureFlags}
     '';
+
+    makeFlags = [ "all-gcc" "all-target-libgcc" ];
   }

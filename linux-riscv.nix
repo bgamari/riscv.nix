@@ -2,7 +2,7 @@
 
 let
   nixpkgs = import <nixpkgs> {};
-  make_flags = ;
+  make_flags = "";
 in
   stdenv.mkDerivation rec {
     name = "linux-riscv";
@@ -12,7 +12,7 @@ in
     '';
     buildPhase = ''
       make ARCH=riscv vmlinux ${make_flags}
-      make ARCH=riscv headers_chec ${make_flags}
+      make ARCH=riscv headers_check ${make_flags}
       make ARCH=riscv headers_instal ${make_flags}
     '';
     src = nixpkgs.fetchgit {

@@ -30,7 +30,7 @@ let
 
     linuxHeaders = pkgs.linuxHeaders_4_4;
 
-    riscv-gcc-stage1 =
+    gccCrossStageStatic =
       let libcCross1 = null;
       in pkgs.wrapGCCCross {
         gcc = pkgs.forceNativeDrv (overrideGcc (real-gcc.override {
@@ -47,7 +47,7 @@ let
     real-glibc =
       let drv = pkgs.callPackage ./nixpkgs/pkgs/development/libraries/glibc {
           installLocales = false;
-          gccCross = riscv-gcc-stage1;
+          gccCross = gccCrossStageStatic;
           inherit linuxHeaders;
         };
       in overrideGlibc drv;
@@ -66,7 +66,12 @@ let
      });
     riscv-glibc = pkgs.forceNativeDrv real-glibc;
 
-    riscv-gcc = pkgs.wrapCC (overrideGcc real-gcc);
+    riscv-gcc = pkgs.wrapGCCCross {
+      gcc = pkgs.forceNativeDrv (overrideGcc real-gcc);
+      libc = riscv-glibc;
+      binutils = riscv-binutils;
+      cross = crossSystem;
+    };
     real-gcc =
       pkgs.callPackage ./nixpkgs/pkgs/development/compilers/gcc/6 {
         cross = crossSystem;
@@ -110,7 +115,7 @@ in
     };
 
     riscv-isa-sim = import ./riscv-isa-sim.nix {
-      inherit riscv-fesvr riscv-gnu-toolchain;
+      inherit riscv-fesvr;
       inherit (pkgs) stdenv;
     };
 

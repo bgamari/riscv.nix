@@ -22,7 +22,7 @@ let
     (import ./nixpkgs {
       inherit system;
       config = { packageOverrides = pkgs: { glibcCross = toolchain.riscv-glibc; }; };
-    }) // { glibcCross = toolchain.riscv-glibc; };
+    }) // { glibcCross = toolchain.riscv-glibc; crossSystem = crossSystem; };
 
   extraGccConfigureFlags =
     if withFloat then "--enable-soft-float" else "--disable-soft-float";
@@ -31,14 +31,14 @@ let
     config = "riscv64-unknown-linux-gnu";
     libc = "glibc";
     arch = "riscv";
-    platform = rec {
+    platform = {
       kernelMajor = "2.6";
       kernelArch = "riscv";
       kernelHeadersBaseConfig = "defconfig"; # TODO: is this right
-      gcc = {
-        arch = "RV64IMAFD";
-        float = if withFloat then "soft" else "";
-      };
+    };
+    gcc = {
+      arch = "RV64IMAFD";
+      float = if withFloat then "soft" else "hard";
     };
     withTLS = false;
     float = if withFloat then "soft" else "hard";
@@ -49,25 +49,11 @@ let
   # Components of our cross-compiler toolchain
   toolchain = rec {
     riscv-binutils = import ./riscv-binutils.nix {
-      inherit (pkgs) stdenv texinfo flex bison;
-      inherit bits withFloat;
+      inherit (pkgs) texinfo flex bison;
+      inherit bits stdenv withFloat;
     };
 
     linuxHeaders = pkgs.linuxHeaders_4_4;
-
-    gccCrossStageStatic =
-      let libcCross1 = null;
-      in pkgs.wrapGCCCross {
-        gcc = pkgs.forceNativeDrv (overrideGcc (real-gcc.override {
-          crossStageStatic = true;
-          langCC = false;
-          libcCross = libcCross1;
-          enableShared = false;
-        }));
-        libc = libcCross1;
-        binutils = riscv-binutils;
-        cross = crossSystem;
-      };
 
     real-glibc =
       let drv = pkgs.callPackage ./nixpkgs/pkgs/development/libraries/glibc {
@@ -91,6 +77,20 @@ let
      });
     riscv-glibc = pkgs.forceNativeDrv real-glibc;
 
+    gccCrossStageStatic =
+      let libcCross1 = null;
+      in pkgs.wrapGCCCross {
+        gcc = pkgs.forceNativeDrv (overrideGcc (real-gcc.override {
+          crossStageStatic = true;
+          langCC = false;
+          libcCross = libcCross1;
+          enableShared = false;
+        }));
+        libc = libcCross1;
+        binutils = riscv-binutils;
+        cross = crossSystem;
+      };
+
     riscv-gcc = pkgs.wrapGCCCross {
       gcc = pkgs.forceNativeDrv (overrideGcc real-gcc);
       libc = riscv-glibc;
@@ -99,6 +99,7 @@ let
     };
     real-gcc =
       pkgs.callPackage ./nixpkgs/pkgs/development/compilers/gcc/6 {
+        inherit stdenv;
         cross = crossSystem;
         binutilsCross = riscv-binutils;
         libcCross = riscv-glibc;
@@ -158,5 +159,5 @@ in
       inherit stdenv bits linux-riscv riscv-busybox;
     };
 
-    inherit toolchain;
+    inherit toolchain stdenv;
   }

@@ -1,13 +1,18 @@
-{ stdenv }:
+{ stdenv, perl, riscv-gcc }:
 
 let
   nixpkgs = import <nixpkgs> {};
 in
   stdenv.mkDerivation rec {
     name = "linux-riscv";
-    builder = ''
-      make ARCH=riscv headers_check && \
-      make ARCH=riscv INSTALL_HDR_PATH=$RISCV/riscv-tools/riscv-gnu-toolchain/linux-headers headers_install
+    buildInputs = [perl riscv-gcc];
+    patchPhase = ''
+      cp ${./config-linux-4.1.y} ./.config
+    '';
+    buildPhase = ''
+      make ARCH=riscv
+      make ARCH=riscv headers_check
+      make ARCH=riscv headers_install
     '';
     src = nixpkgs.fetchgit {
       # linux-4.1.y-riscv branch

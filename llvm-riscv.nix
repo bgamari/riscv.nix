@@ -69,7 +69,7 @@ in stdenv.mkDerivation rec {
 
   src = nixpkgs.fetchgit {
     rev = "cd5b77c73a77a110c229bd2a13495471ff44b6f0";
-    url = "git@github.com:riscv/riscv-llvm.git";
+    url = "git://github.com/riscv/riscv-llvm.git";
     fetchSubmodules = true;
     sha256 = "0jlj0vhmxxl2w9xjzhdcl4k1p3dgq93npqpqkjg7qcngpjlmifd2";
     };

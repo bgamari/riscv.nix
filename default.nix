@@ -55,7 +55,8 @@ in
     };
 
     linux-riscv = import ./linux-riscv.nix {
-      inherit (pkgs) stdenv;
+      inherit (pkgs) stdenv perl;
+      inherit riscv-gcc;
     };
 
     # These are broken

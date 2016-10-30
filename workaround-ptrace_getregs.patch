@@ -1,0 +1,6 @@
+--- a/sysdeps/unix/sysv/linux/riscv/sys/user.h	2016-10-29 22:58:12.572180467 -0400
++++ b/sysdeps/unix/sysv/linux/riscv/sys/user.h	2016-10-29 22:58:27.132439138 -0400
+@@ -1,2 +1,2 @@
+ /* x86 puts "struct user_regs_struct" in here, this is just a shim. */
+-#include <asm/ptrace.h>
++//#include <asm/ptrace.h>

@@ -1,7 +1,10 @@
 { system ? builtins.currentSystem }:
 
 let
-  pkgs = import <nixpkgs> { inherit system; };
+  pkgs = import ./nixpkgs { inherit system crossSystem; };
+  crossSystem = {
+    config = "riscv64-unknown-linux";
+  };
   bits = "64";
 in
   rec {
@@ -23,9 +26,16 @@ in
       inherit bits;
     };
 
+    linuxHeaders = pkgs.linuxHeaders_4_4;
+
+    # Debugging segfaults
+    #glibc = pkgs.enableDebugging pkgs.glibc;
+    glibc = pkgs.glibc.override {debug = true;};
+    #glibc = pkgs.glibc;
+
     riscv-glibc = import ./riscv-glibc.nix {
       inherit (pkgs) stdenv gmp mpfr libmpc;
-      inherit bits riscv-gcc-stage1;
+      inherit bits riscv-gcc-stage1 riscv-binutils linuxHeaders glibc;
     };
 
     riscv-gcc-stage1 = import ./riscv-gcc-stage1.nix {
@@ -65,8 +75,6 @@ in
       };
       dontDisableStatic = true;
     })).override {
-      cross = {
-        config = "riscv64-unknown-linux";
-      };
+      cross = crossSystem;
     };
   }

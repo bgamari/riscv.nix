@@ -2,6 +2,7 @@
 
 let
   nixpkgs = import <nixpkgs> {};
+  make_flags = "-j$NIX_BUILD_CORES -l$NIX_BUILD_CORES";
 in
   stdenv.mkDerivation rec {
     name = "riscv-gcc-stage1";
@@ -13,7 +14,7 @@ in
       "--disable-shared"
       "--disable-threads"
       "--enable-tls"
-      "--enable-languages=c,c++"
+      "--enable-languages=c"
       "--disable-libatomic"
       "--disable-libmudflap"
       "--disable-libssp"
@@ -23,11 +24,15 @@ in
       "--disable-bootstrap"
       "--disable-werror"
       "--disable-multilib"
+      "--with-as=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-as"
+      "--with-ld=${riscv-binutils}/bin/riscv${bits}-unknown-linux-gnu-ld"
       "--with-arch=RV64IMAFD"
     ];
     hardeningDisable = [ "format" ];
     dontDisableStatic = true;
     enableParallelBuilding = true;
+    dontStrip = true;
+    NIX_STRIP_DEBUG = 0;
     src = nixpkgs.fetchgit {
       rev = "9b2f75b37e2626e78226479e7fdceda06357bfa8";
       url = "git://github.com/riscv/riscv-gcc.git";
@@ -38,17 +43,6 @@ in
     configurePhase = ''
       mkdir build
       cd build
-      ../configure ${builtins.concatStringsSep " " configureFlags}
+      ../configure --prefix=$prefix ${builtins.concatStringsSep " " configureFlags}
     '';
-
-    buildPhase = ''
-      make inhibit-libc=true all-gcc
-      make inhibit-libc=true all-libcc1
-      make inhibit-libc=true install-gcc
-      make inhibit-libc=true all-target-libgcc
-      make inhibit-libc=true install-target-libgcc
-    '';
-    installPhase = "";
-    dontStrip = true;
-    NIX_STRIP_DEBUG = 0;
   }

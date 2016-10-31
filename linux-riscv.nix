@@ -7,13 +7,14 @@ in
   stdenv.mkDerivation rec {
     name = "linux-riscv";
     buildInputs = [perl riscv-gcc];
-    patchPhase = ''
+    patches = [ ./fixit.patch ];
+    configurePhase = ''
       cp ${./config-linux-4.1.y} ./.config
     '';
     buildPhase = ''
       make ARCH=riscv vmlinux ${make_flags}
       make ARCH=riscv headers_check ${make_flags}
-      make ARCH=riscv headers_instal ${make_flags}
+      make ARCH=riscv headers_install ${make_flags}
     '';
     src = nixpkgs.fetchgit {
       # linux-4.1.y-riscv branch

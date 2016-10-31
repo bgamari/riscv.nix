@@ -16,9 +16,9 @@ in
       (if withFloat then "--enable-soft-float" else "--disable-soft-float")
     ];
     src = nixpkgs.fetchgit {
-      rev = "67561745546973c1e969348e274129b2d0637b1c";
+      rev = "2a6d6cca9bb6a900f31f2ba40e48c8e9d239b36d";
       url = "git://github.com/riscv/riscv-binutils-gdb.git";
-      sha256 = "0fhniqqvh6hn31xnrsdjyikaklp21r718f2kxph4gkx9ma88b9wn";
+      sha256 = "0jl36fqzlysapi1d3pm0d6wjpi1sfgq6vbbd7xw5flzh7jzcmlbw";
     };
     enableParallelBuilding = true;
   }

@@ -110,15 +110,17 @@ let
     overrideGcc = drv:
      pkgs.lib.overrideDerivation drv (oldAttrs: {
         src = pkgs.fetchgit {
-          rev = "9b2f75b37e2626e78226479e7fdceda06357bfa8";
+          rev = "24f58f81fca66963121da4035c2488aeeaccce6b";
           url = "git://github.com/riscv/riscv-gcc.git";
-          sha256 = "0n6lf1zm82lwyv7igfkmhh8kscg3lr95xa3lzwwqa7arddv9m7iz";
+          sha256 = "1vb6qhlnxlgkn0d08qqlp0f2lhl60cd4j069x81zf0kyid3fbqrp";
         };
 
         # we need flex since it's a development snapshot
         nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.flex pkgs.bison ];
         # For withFloat
         configureFlags = oldAttrs.configureFlags + extraGccConfigureFlags;
+        # Add patches from riscv-gnu-tools
+        patches = oldAttrs.patches ++ [ ./gcc.patch ];
       });
   };
 in

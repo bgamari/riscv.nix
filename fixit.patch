@@ -1,0 +1,15 @@
+diff --git a/arch/riscv/Makefile b/arch/riscv/Makefile
+index 368f264..f288018 100644
+--- a/arch/riscv/Makefile
++++ b/arch/riscv/Makefile
+@@ -45,8 +45,8 @@ KBUILD_CFLAGS += -mno-atomic
+ endif
+ 
+ KBUILD_CFLAGS += -Wall
+-KBUILD_CFLAGS += -msoft-float
+-KBUILD_AFLAGS += -msoft-float
++KBUILD_CFLAGS += -mfloat-abi=soft
++KBUILD_AFLAGS += -mfloat-abi=soft
+ 
+ ifeq ($(CONFIG_RVC),y)
+        KBUILD_CFLAGS += -mrvc

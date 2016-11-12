@@ -5,7 +5,7 @@ stdenv.mkDerivation rec {
   buildInputs = [ linux-riscv ];
   srcs = [
     fetchurl("http://riscv.org/install-guides/linux-inittab")
-  ]
+  ];
   buildPhase = "";
   installPhase = ''
     mkdir -p root

@@ -6,8 +6,8 @@ in
   stdenv.mkDerivation rec {
     name = "riscv-fesvr";
     src = nixpkgs.fetchgit {
-      rev = "0f34d7ad311f78455a674224225f5b3056efba1d";
+      rev = "72f893b927f152d1bab283081f30ebb83ae8534b";
       url = "git://github.com/riscv/riscv-fesvr.git";
-      sha256 = "0xjf0z0ylwwg4kgl05nl3ihpv0frw29ajqlk6clplsby7nfzdcb3";
+      sha256 = "142rp1agbhb6ri845r58207yjx2pd096mwxbr6n70sl4mqvvgvay";
     };
   }

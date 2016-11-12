@@ -21,4 +21,21 @@ in
       sha256 = "0jl36fqzlysapi1d3pm0d6wjpi1sfgq6vbbd7xw5flzh7jzcmlbw";
     };
     enableParallelBuilding = true;
+
+    meta = with stdenv.lib; {
+      description = "Tools for manipulating binaries (linker, assembler, etc.)";
+      longDescription = ''
+        The GNU Binutils are a collection of binary tools.  The main
+        ones are `ld' (the GNU linker) and `as' (the GNU assembler).
+        They also include the BFD (Binary File Descriptor) library,
+        `gprof', `nm', `strip', etc.
+      '';
+      homepage = http://www.gnu.org/software/binutils/;
+      license = licenses.gpl3Plus;
+      platforms = platforms.unix;
+
+      /* Give binutils a lower priority than gcc-wrapper to prevent a
+        collision due to the ld/as wrappers/symlinks in the latter. */
+      priority = "10";
+    };
   }

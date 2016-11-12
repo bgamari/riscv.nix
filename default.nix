@@ -110,18 +110,27 @@ let
     overrideGcc = drv:
      pkgs.lib.overrideDerivation drv (oldAttrs: {
         src = pkgs.fetchgit {
-          rev = "24f58f81fca66963121da4035c2488aeeaccce6b";
+          rev = "9b2f75b37e2626e78226479e7fdceda06357bfa8";
           url = "git://github.com/riscv/riscv-gcc.git";
-          sha256 = "1vb6qhlnxlgkn0d08qqlp0f2lhl60cd4j069x81zf0kyid3fbqrp";
+          sha256 = "0n6lf1zm82lwyv7igfkmhh8kscg3lr95xa3lzwwqa7arddv9m7iz";
         };
 
         # we need flex since it's a development snapshot
         nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.flex pkgs.bison ];
         # For withFloat
         configureFlags = oldAttrs.configureFlags + extraGccConfigureFlags;
-        # Add patches from riscv-gnu-tools
-        patches = oldAttrs.patches ++ [ ./gcc.patch ];
       });
+
+    riscv-gdb = pkgs.lib.overrideDerivation pkgs.gdb (oldAttrs: {
+      nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.flex pkgs.yacc ];
+      src = pkgs.fetchgit {
+        rev = "2a6d6cca9bb6a900f31f2ba40e48c8e9d239b36d";
+        url = "git://github.com/riscv/riscv-binutils-gdb.git";
+        sha256 = "0jl36fqzlysapi1d3pm0d6wjpi1sfgq6vbbd7xw5flzh7jzcmlbw";
+        name = "binutils";
+      };
+      sourceRoot = "binutils/gdb";
+    });
   };
 in
   rec {
@@ -157,9 +166,9 @@ in
 
     riscv-busybox = (pkgs.busybox.override { stdenv = stdenv;}).crossDrv;
 
-    riscv-image = import ./riscv-image.nix {
-      inherit stdenv bits linux-riscv riscv-busybox;
-    };
+    #riscv-image = import ./riscv-image.nix {
+    #  inherit stdenv bits linux-riscv riscv-busybox;
+    #};
 
     inherit toolchain stdenv;
   }

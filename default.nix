@@ -110,9 +110,9 @@ let
     overrideGcc = drv:
      pkgs.lib.overrideDerivation drv (oldAttrs: {
         src = pkgs.fetchgit {
-          rev = "9b2f75b37e2626e78226479e7fdceda06357bfa8";
+          rev = "879263a2c8384f9c9e679505186148fc41e40f84";
           url = "git://github.com/riscv/riscv-gcc.git";
-          sha256 = "0n6lf1zm82lwyv7igfkmhh8kscg3lr95xa3lzwwqa7arddv9m7iz";
+          sha256 = "01g1idc9ksp50g215nw956y26byl2gxkz3ww5nawn480rays2ywk";
         };
 
         # we need flex since it's a development snapshot

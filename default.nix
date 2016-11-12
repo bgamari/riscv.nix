@@ -149,9 +149,9 @@ in
       inherit stdenv;
     };
 
-    riscv-pk = import ./riscv-pk.nix {
+    riscv-pk = (import ./riscv-pk.nix {
       inherit stdenv;
-    };
+    }).crossDrv;
 
     riscv-isa-sim = import ./riscv-isa-sim.nix {
       inherit riscv-fesvr;

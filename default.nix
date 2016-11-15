@@ -169,6 +169,12 @@ in
       inherit (pkgs) fetchgit dejagnu autoconf automake libtool texinfo;
     }).crossDrv;
 
+    ncurses = import ./nixpkgs/pkgs/development/libraries/ncurses {
+      inherit (pkgs) lib fetchurl pkgconfig gpm;
+      inherit stdenv;
+      abiVersion = "6";
+    };
+
     riscv-busybox = (pkgs.busybox.override { stdenv = stdenv;}).crossDrv;
 
     #riscv-image = import ./riscv-image.nix {

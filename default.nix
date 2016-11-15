@@ -181,5 +181,6 @@ in
     #  inherit stdenv bits linux-riscv riscv-busybox;
     #};
 
+    nixpkgs = pkgs;
     inherit toolchain stdenv;
   }

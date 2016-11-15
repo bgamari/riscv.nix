@@ -164,6 +164,11 @@ in
       riscv-gcc = toolchain.riscv-gcc;
     };
 
+    riscv-libffi = (import ./libffi.nix {
+      inherit stdenv;
+      inherit (pkgs) fetchgit dejagnu autoconf automake libtool texinfo;
+    }).crossDrv;
+
     riscv-busybox = (pkgs.busybox.override { stdenv = stdenv;}).crossDrv;
 
     #riscv-image = import ./riscv-image.nix {

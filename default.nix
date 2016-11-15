@@ -65,9 +65,9 @@ let
     overrideGlibc = drv:
      pkgs.lib.overrideDerivation drv (oldAttrs: {
         src = pkgs.fetchgit {
-          rev = "f02ec12b5e5945b9fe6e4f46fe48f13a66dd0b97";
+          rev = "362afedda5c2e011beb63ce2717fe6ab627eb2cb";
           url = "git://github.com/riscv/riscv-glibc.git";
-          sha256 = "16an18mk3hr0qmpv0lqir229d0ikj9m4n6a3q9x9raswn1sf1iyi";
+          sha256 = "0klbn2sikfddn1iybsi8723jknp8n5imjk4byx51jszjy5msz3bv";
         };
         patches = oldAttrs.patches ++ [
           # Madness pertaining to an interaction between the Linux headers and a

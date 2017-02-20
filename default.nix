@@ -19,13 +19,83 @@ let
 in
 let
   pkgs =
-    (import ./nixpkgs {
-      inherit system;
-      config = { packageOverrides = pkgs: { glibcCross = toolchain.riscv-glibc; }; };
-    }) // { glibcCross = toolchain.riscv-glibc; crossSystem = crossSystem; };
+    (import ./nixpkgs ({
+      inherit crossSystem system;
+      config = { inherit packageOverrides; };
+    }));
+
+
+  overrideGlibc = pkgs: drv:
+    pkgs.lib.overrideDerivation drv (oldAttrs: {
+      src = pkgs.fetchgit {
+        rev = "362afedda5c2e011beb63ce2717fe6ab627eb2cb";
+        url = "git://github.com/riscv/riscv-glibc.git";
+        sha256 = "0klbn2sikfddn1iybsi8723jknp8n5imjk4byx51jszjy5msz3bv";
+      };
+      patches = oldAttrs.patches ++ [
+        # Madness pertaining to an interaction between the Linux headers and a
+        # FreeBSD compatibility hack in glibc.
+        ./workaround-ptrace_getregs.patch
+      ];
+    });
+
+  packageOverrides = pkgs:
+    let overrideGccWithRiscvTree = drv:
+          pkgs.lib.overrideDerivation drv (oldAttrs: {
+            src = pkgs.fetchgit {
+              rev = "879263a2c8384f9c9e679505186148fc41e40f84";
+              url = "git://github.com/riscv/riscv-gcc.git";
+              sha256 = "01g1idc9ksp50g215nw956y26byl2gxkz3ww5nawn480rays2ywk";
+            };
+            # we need flex since it's a development snapshot
+            nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.flex pkgs.bison ];
+            # For withFloat
+            configureFlags = oldAttrs.configureFlags +
+              (if withFloat then "--enable-soft-float" else "--disable-soft-float");
+          });
+        libcCross = toolchain.riscv-glibc;
+        overrideBinutilsWithRiscvTree = drv:
+          pkgs.lib.overrideDerivation drv (oldAttrs: {
+            src = pkgs.fetchgit {
+              rev = "407067a68ad825f82568f3741c25d3bcc186a232";
+              url = "git://github.com/riscv/riscv-binutils-gdb.git";
+              sha256 = "0r913gkh193xd6y40n48p6hj6vix10fakh3jwh95v8lwcbps6p5j";
+            };
+        });
+        binutilsCross = overrideBinutilsWithRiscvTree (pkgs.forcedNativePackages.binutils.override { noSysDirs = true; cross = crossSystem; });
+        gccCrossStatic = pkgs.wrapGCCCross {
+          gcc = overrideGccWithRiscvTree (pkgs.forcedNativePackages.gcc6.cc.override {
+            enableShared = false;
+            libcCross = null;
+            langCC = false;
+            crossStageStatic = true;
+            cross = crossSystem;
+            inherit (pkgs.forcedNativePackages) binutilsCross;
+          });
+          libc = null;
+          binutils = binutilsCross;
+          cross = crossSystem;
+        };
+    in {
+      inherit binutilsCross gccCrossStatic;
+      glibcCross = pkgs.forcedNativePackages.glibc.override {
+        gccCross = gccCrossStatic;
+      };
+      riscv-gcc = pkgs.wrapGCCCross {
+        gcc = overrideGccWithRiscvTree (pkgs.forcedNativePackages.gcc6.cc.override {
+          libcCross = libcCross;
+          langCC = false;
+          crossStageStatic = false;
+          cross = crossSystem;
+        });
+        libc = libcCross;
+        binutils = binutilsCross;
+        cross = crossSystem;
+      };
+    };
 
   extraGccConfigureFlags =
-    if withFloat then "--enable-soft-float" else "--disable-soft-float";
+              if withFloat then "--enable-soft-float" else "--disable-soft-float";
 
   crossSystem = {
     config = "riscv64-unknown-linux-gnu";
@@ -43,65 +113,36 @@ let
     withTLS = false;
     float = if withFloat then "soft" else "hard";
   };
-  stdenv = pkgs.makeStdenvCross pkgs.stdenv crossSystem toolchain.riscv-binutils toolchain.riscv-gcc;
   bits = "64";
 
   # Components of our cross-compiler toolchain
   toolchain = rec {
-    riscv-binutils = import ./riscv-binutils.nix {
-      inherit (pkgs) texinfo flex bison;
-      inherit bits stdenv withFloat;
-    };
-
     linuxHeaders = pkgs.linuxHeaders_4_4;
+
+    #riscv-newlib = import ./riscv-newlib.nix {
+    #  inherit (pkgs) stdenv;
+    #};
 
     real-glibc =
       let drv = pkgs.callPackage ./nixpkgs/pkgs/development/libraries/glibc {
           installLocales = false;
-          gccCross = gccCrossStageStatic;
+          #gccCross = gccCrossStageStatic;
           inherit linuxHeaders;
         };
       in overrideGlibc drv;
-    overrideGlibc = drv:
-     pkgs.lib.overrideDerivation drv (oldAttrs: {
-        src = pkgs.fetchgit {
-          rev = "362afedda5c2e011beb63ce2717fe6ab627eb2cb";
-          url = "git://github.com/riscv/riscv-glibc.git";
-          sha256 = "0klbn2sikfddn1iybsi8723jknp8n5imjk4byx51jszjy5msz3bv";
-        };
-        patches = oldAttrs.patches ++ [
-          # Madness pertaining to an interaction between the Linux headers and a
-          # FreeBSD compatibility hack in glibc.
-          ./workaround-ptrace_getregs.patch
-        ];
-     });
-    riscv-glibc = pkgs.forceNativeDrv real-glibc;
-
-    gccCrossStageStatic =
-      let libcCross1 = null;
-      in pkgs.wrapGCCCross {
-        gcc = pkgs.forceNativeDrv (overrideGcc (real-gcc.override {
-          crossStageStatic = true;
-          langCC = false;
-          libcCross = libcCross1;
-          enableShared = false;
-        }));
-        libc = libcCross1;
-        binutils = riscv-binutils;
-        cross = crossSystem;
-      };
+    riscv-glibc = real-glibc;
 
     riscv-gcc = pkgs.wrapGCCCross {
-      gcc = pkgs.forceNativeDrv (overrideGcc real-gcc);
+      gcc = overrideGcc real-gcc;
       libc = riscv-glibc;
-      binutils = riscv-binutils;
+      binutils = pkgs.crossBinutils;
       cross = crossSystem;
     };
     real-gcc =
-      pkgs.callPackage ./nixpkgs/pkgs/development/compilers/gcc/6 {
-        inherit stdenv;
+      pkgs.forcedNativePackages.callPackage ./nixpkgs/pkgs/development/compilers/gcc/6 {
+        inherit (pkgs) stdenv;
         cross = crossSystem;
-        binutilsCross = riscv-binutils;
+        binutilsCross = pkgs.crossBinutils;
         libcCross = riscv-glibc;
         noSysDirs = true;
       };
@@ -121,37 +162,35 @@ let
         configureFlags = oldAttrs.configureFlags + extraGccConfigureFlags;
       });
 
-    riscv-gdb = pkgs.lib.overrideDerivation pkgs.gdb (oldAttrs: {
-      nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.flex pkgs.yacc ];
-      src = pkgs.fetchgit {
-        rev = "2a6d6cca9bb6a900f31f2ba40e48c8e9d239b36d";
-        url = "git://github.com/riscv/riscv-binutils-gdb.git";
-        sha256 = "0jl36fqzlysapi1d3pm0d6wjpi1sfgq6vbbd7xw5flzh7jzcmlbw";
-        name = "binutils";
-      };
-      sourceRoot = "binutils/gdb";
-    });
+    #riscv-gdb = pkgs.lib.overrideDerivation pkgs.gdb (oldAttrs: {
+    #  nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [ pkgs.flex pkgs.yacc ];
+    #  src = pkgs.fetchgit {
+    #    rev = "2a6d6cca9bb6a900f31f2ba40e48c8e9d239b36d";
+    #    url = "git://github.com/riscv/riscv-binutils-gdb.git";
+    #    sha256 = "0jl36fqzlysapi1d3pm0d6wjpi1sfgq6vbbd7xw5flzh7jzcmlbw";
+    #    name = "binutils";
+    #  };
+    #  sourceRoot = "binutils/gdb";
+    #});
   };
 in
   rec {
-    llvm-riscv = import ./llvm-riscv.nix {
+    llvm-riscv = (import ./llvm-riscv.nix {
       version = "3.8";
-      inherit (pkgs) perl groff cmake python libffi binutils libxml2 valgrind ncurses zlib compiler-rt_src libcxxabi;
-      inherit stdenv;
-    };
+      inherit (pkgs) stdenv perl groff cmake python libffi binutils libxml2 valgrind ncurses zlib compiler-rt_src libcxxabi;
+    });
 
     riscv-qemu = import ./riscv-qemu.nix {
-      inherit (pkgs) autoconf automake libtool flex bison SDL zlib glib pkgconfig python;
-      inherit stdenv;
+      inherit (pkgs) stdenv autoconf automake libtool flex bison SDL zlib glib pkgconfig python;
     };
 
     riscv-fesvr = import ./riscv-fesvr.nix {
-      inherit stdenv;
+      inherit (pkgs) stdenv;
     };
 
     riscv-pk = (import ./riscv-pk.nix {
-      inherit stdenv;
-    }).crossDrv;
+      inherit (pkgs) stdenv;
+    });
 
     riscv-isa-sim = import ./riscv-isa-sim.nix {
       inherit riscv-fesvr;
@@ -160,27 +199,25 @@ in
 
     linux-riscv = import ./linux-riscv.nix {
       inherit (pkgs) perl;
-      inherit stdenv;
+      inherit (pkgs) stdenv;
       riscv-gcc = toolchain.riscv-gcc;
     };
 
     riscv-libffi = (import ./libffi.nix {
-      inherit stdenv;
-      inherit (pkgs) fetchgit dejagnu autoconf automake libtool texinfo;
-    }).crossDrv;
+      inherit (pkgs) stdenv fetchgit dejagnu autoconf automake libtool texinfo;
+    });
 
     ncurses = import ./nixpkgs/pkgs/development/libraries/ncurses {
       inherit (pkgs) lib fetchurl pkgconfig gpm;
-      inherit stdenv;
+      inherit (pkgs) stdenv;
       abiVersion = "6";
     };
 
-    riscv-busybox = (pkgs.busybox.override { stdenv = stdenv;}).crossDrv;
+    riscv-busybox = (pkgs.busybox.override { stdenv = pkgs.stdenv;});
 
     #riscv-image = import ./riscv-image.nix {
     #  inherit stdenv bits linux-riscv riscv-busybox;
     #};
 
-    nixpkgs = pkgs;
-    inherit toolchain stdenv;
+    inherit toolchain pkgs;
   }

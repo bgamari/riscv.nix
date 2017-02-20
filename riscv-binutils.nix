@@ -1,11 +1,11 @@
-{ bits, withFloat, stdenv, texinfo, flex, bison }:
+{ bits, withFloat, stdenv, texinfo, flex, bison, m4 }:
 
 let
   nixpkgs = import <nixpkgs> {};
 in
   stdenv.mkDerivation rec {
     name = "riscv-binutils";
-    buildInputs = [ texinfo flex bison ];
+    buildInputs = [ texinfo flex bison m4 ];
     # Since we statically build readline
     dontDisableStatic = true;
     configureFlags = [
@@ -16,9 +16,9 @@ in
       (if withFloat then "--enable-soft-float" else "--disable-soft-float")
     ];
     src = nixpkgs.fetchgit {
-      rev = "2a6d6cca9bb6a900f31f2ba40e48c8e9d239b36d";
+      rev = "407067a68ad825f82568f3741c25d3bcc186a232";
       url = "git://github.com/riscv/riscv-binutils-gdb.git";
-      sha256 = "0jl36fqzlysapi1d3pm0d6wjpi1sfgq6vbbd7xw5flzh7jzcmlbw";
+      sha256 = "0r913gkh193xd6y40n48p6hj6vix10fakh3jwh95v8lwcbps6p5j";
     };
     enableParallelBuilding = true;
 
